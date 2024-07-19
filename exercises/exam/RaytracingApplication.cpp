@@ -52,14 +52,15 @@ void RaytracingApplication::Update()
     // Set renderer camera
     const Camera& camera = *m_cameraController.GetCamera()->GetCamera();
     m_renderer.SetCurrentCamera(camera);
-
+    //glm::mat4 m_diceMatrix = glm::mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -3, -3, 0, 1);
     // Update the material properties
     glm::mat4 viewMatrix = camera.GetViewMatrix();
     m_material->SetUniformValue("ViewMatrix", viewMatrix);
     m_material->SetUniformValue("ProjMatrix", camera.GetProjectionMatrix());
     m_material->SetUniformValue("InvProjMatrix", glm::inverse(camera.GetProjectionMatrix()));
-    m_material->SetUniformValue("SphereCenter", glm::vec3(viewMatrix * glm::vec4(m_sphereCenter, 1.0f)));
-    m_material->SetUniformValue("BoxMatrix", viewMatrix * m_boxMatrix);
+   /* m_material->SetUniformValue("SphereCenter", glm::vec3(viewMatrix * glm::vec4(m_sphereCenter, 1.0f)));
+    m_material->SetUniformValue("BoxMatrix", viewMatrix * m_boxMatrix);*/
+    m_material->SetUniformValue("DiceMatrix", viewMatrix * m_diceMatrix);
     m_material->SetUniformValue("FrameCount", ++m_frameCount);
 }
 
@@ -106,18 +107,25 @@ void RaytracingApplication::InitializeCamera()
 
 void RaytracingApplication::InitializeMaterial()
 {
-    m_material = CreateRaytracingMaterial("shaders/exercise11.glsl");
+    //m_material = CreateRaytracingMaterial("shaders/exercise11.glsl");
+    m_material = CreateRaytracingMaterial("shaders/exam.glsl");
 
     // Initialize material uniforms
-    m_material->SetUniformValue("SphereCenter", m_sphereCenter);
+   /* m_material->SetUniformValue("SphereCenter", m_sphereCenter);
     m_material->SetUniformValue("SphereRadius", 1.25f);
     m_material->SetUniformValue("SphereColor", glm::vec3(0, 0, 1));
     m_material->SetUniformValue("BoxMatrix", m_boxMatrix);
     m_material->SetUniformValue("BoxSize", glm::vec3(1, 1, 1));
-    m_material->SetUniformValue("BoxColor", glm::vec3(1, 0, 0));
+    m_material->SetUniformValue("BoxColor", glm::vec3(1, 0, 0));*/
     m_material->SetUniformValue("LightColor", glm::vec3(1.0f));
     m_material->SetUniformValue("LightIntensity", 4.0f);
     m_material->SetUniformValue("LightSize", glm::vec2(3.0f));
+
+    // Dice uniforms
+    glm::mat4 diceMatrix = glm::translate(glm::vec3(-3, -3, 0));
+    m_material->SetUniformValue("DiceMatrix", diceMatrix);
+    m_material->SetUniformValue("DiceSize", glm::vec3(1, 1, 1));
+    m_material->SetUniformValue("DiceColor", glm::vec3(0, 1, 0));
 
     // Enable blending and set the blending parameters to alpha blending
     m_material->SetBlendEquation(Material::BlendEquation::Add);
@@ -211,7 +219,7 @@ void RaytracingApplication::RenderGUI()
 
     if (auto window = m_imGui.UseWindow("Scene parameters"))
     {
-        if (ImGui::TreeNodeEx("Sphere", ImGuiTreeNodeFlags_DefaultOpen))
+       /* if (ImGui::TreeNodeEx("Sphere", ImGuiTreeNodeFlags_DefaultOpen))
         {
             changed |= ImGui::DragFloat3("Center", &m_sphereCenter[0], 0.1f);
             changed |= ImGui::DragFloat("Radius", m_material->GetDataUniformPointer<float>("SphereRadius"), 0.1f);
@@ -231,7 +239,21 @@ void RaytracingApplication::RenderGUI()
             m_boxMatrix = glm::translate(translation) * glm::eulerAngleXYZ(rotation.x, rotation.y, rotation.z);
 
             ImGui::TreePop();
+        }*/
+        if (ImGui::TreeNodeEx("Dice", ImGuiTreeNodeFlags_DefaultOpen)) // Add dice controls
+        {
+            static glm::vec3 diceTranslation(-3, -3, 0);
+            static glm::vec3 diceRotation(0.0f);
+
+            changed |= ImGui::DragFloat3("Translation", &diceTranslation[0], 0.1f);
+            changed |= ImGui::DragFloat3("Rotation", &diceRotation[0], 0.1f);
+            changed |= ImGui::DragFloat3("Size", m_material->GetDataUniformPointer<float>("DiceSize"), 0.1f);
+            changed |= ImGui::ColorEdit3("Color", m_material->GetDataUniformPointer<float>("DiceColor"));
+            m_diceMatrix = glm::translate(diceTranslation) * glm::eulerAngleXYZ(diceRotation.x, diceRotation.y, diceRotation.z);
+
+            ImGui::TreePop();
         }
+
         if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen))
         {
             changed |= ImGui::DragFloat2("Size", m_material->GetDataUniformPointer<float>("LightSize"), 0.1f);
@@ -249,3 +271,4 @@ void RaytracingApplication::RenderGUI()
 
     m_imGui.EndFrame();
 }
+

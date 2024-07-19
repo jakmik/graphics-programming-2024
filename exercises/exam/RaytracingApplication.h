@@ -47,6 +47,8 @@ private:
     // World matrix for cube
     glm::mat4 m_boxMatrix;
 
+    glm::mat4 m_diceMatrix;
+
     // Camera controller
     CameraController m_cameraController;
 
